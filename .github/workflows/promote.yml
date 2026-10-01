@@ -1,0 +1,39 @@
+name: Publish verified CAMARA POS installer
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Verified installer version
+        required: true
+        type: string
+      artifact_url:
+        description: Short-lived signed URL for the verified Windows artifact ZIP
+        required: true
+        type: string
+      artifact_sha256:
+        description: SHA256 of the verified artifact ZIP
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-${{ inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify and publish installer
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PUBLISH_VERSION: ${{ inputs.version }}
+          ARTIFACT_URL: ${{ inputs.artifact_url }}
+          ARTIFACT_SHA256: ${{ inputs.artifact_sha256 }}
+        run: python3 .github/scripts/promote_release.py
